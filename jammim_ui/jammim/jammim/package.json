@@ -1,0 +1,49 @@
+{
+  "name": "jammim",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "react-start": "vite",
+    "start": "concurrently \"npm run react-start\" \"npm run electron-start\"",
+    "electron-start": "wait-on http://localhost:5173 && electron .",
+    "electron-build": "electron ."
+  },
+  "dependencies": {
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/drawing_utils": "^0.3.1675466124",
+    "@mediapipe/hands": "^0.4.1675469240",
+    "@react-three/drei": "^10.6.1",
+    "@react-three/fiber": "^9.2.0",
+    "@react-three/postprocessing": "^3.0.4",
+    "brightness": "^2.2.0",
+    "clap-detector": "^0.5.3",
+    "drei": "^0.0.45",
+    "framer-motion": "^12.23.9",
+    "mic": "^2.1.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-draggable": "^4.5.0",
+    "three": "^0.178.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "concurrently": "^9.2.0",
+    "electron": "^37.2.4",
+    "electron-rebuild": "^3.2.9",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "vite": "^7.0.4",
+    "wait-on": "^8.0.5"
+  },
+  "main": "electron/main.cjs"
+}

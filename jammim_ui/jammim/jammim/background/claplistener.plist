@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- LaunchAgent 식별자 -->
+  <key>Label</key>
+  <string>com.yourappname.claplistener</string>
+
+  <!-- 실행할 프로그램 -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/USERNAME/your_project_path/background.sh</string>
+  </array>
+
+  <!-- 로그인 시 자동 실행 -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- n초마다 재실행할 경우 사용 (선택사항, 주기적 실행) -->
+  <!-- <key>StartInterval</key>
+  <integer>300</integer> -->
+
+  <!-- 로그 경로 -->
+  <key>StandardOutPath</key>
+  <string>/tmp/claplistener.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/tmp/claplistener.err</string>
+
+  <!-- 필요한 환경변수 지정 -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/USERNAME/opt/anaconda3/envs/ENV_NAME/bin:/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+</dict>
+</plist>

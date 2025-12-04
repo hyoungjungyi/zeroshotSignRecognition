@@ -1,0 +1,54 @@
+# ===========================
+# 1. 시스템 및 에디터 파일
+# ===========================
+.DS_Store
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local
+
+# ===========================
+# 2. Node.js / Python 관련
+# ===========================
+node_modules/
+/node_modules
+dist/
+dist-ssr/
+jamim_env/
+__pycache__/
+*.pyc
+
+# 로그 파일들
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ===========================
+# 3. 보안 및 설정 파일 (사용자 지정)
+# ===========================
+openai.txt
+clapDetect.cjs
+getBrightness.cjs
+
+# ===========================
+# 4. 🚨 대용량 모델 & 데이터 (절대 올리지 마세요)
+# ===========================
+# 확장자로 무시 (경로 상관없이 다 막음)
+*.pth
+*.pt
+*.wav
+*.mp4
+
+# 혹시 몰라 경로로도 한 번 더 막음
+jammim_ui/jammim/jammim/electron/model/slip_protonet_final.pth
+jammim_ui/jammim/jammim/electron/motionCapture/captured_audio.wav
+jammim_ui/jammim/jammim/electron/motionCapture/captured_video.pt
+jammim_ui/jammim/jammim/electron/motionCapture/prototypes.pt
