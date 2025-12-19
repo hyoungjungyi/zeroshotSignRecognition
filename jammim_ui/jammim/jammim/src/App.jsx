@@ -9,17 +9,49 @@ function App() {
   const [count, setCount] = useState(0)
   const [isListening, setIsListening] = useState(false)
   const [transcript, setTranscript] = useState('')
+  const [llmText, setLlmText] = useState('');
   const recognitionRef = useRef(null)
+  const handleLLMText = (msg) => {
+    console.log('[Renderer] LLM text update:', msg);
+    setLlmText(msg);
+  };
 
 
   // 컴포넌트 unmount 시 인식 종료(clean-up)
   useEffect(() => {
+    let unsubscribe = null;
+
+    // electronAPI 존재 여부 확인 로그
+    console.log('[Renderer] window.electronAPI:', window.electronAPI);
+
+    if (window.electronAPI && typeof window.electronAPI.onLLMResponse === 'function') {
+      unsubscribe = window.electronAPI.onLLMResponse((msg) => {
+        console.log('[Renderer] LLM response received:', msg);
+        handleLLMText(msg);
+      });
+    } else {
+      console.warn('[Renderer] electronAPI.onLLMResponse not available');
+    }
+
+    // window.postMessage fallback 수신
+    const messageHandler = (event) => {
+      if (event.data && event.data.type === 'llm-response') {
+        console.log('[Renderer] llm-response via postMessage:', event.data.payload);
+        handleLLMText(event.data.payload);
+      }
+    };
+    window.addEventListener('message', messageHandler);
+
     return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+      window.removeEventListener('message', messageHandler);
       if (recognitionRef.current) {
         recognitionRef.current.abort();
         recognitionRef.current = null;
       }
-    }
+    };
   }, []);
 
   const handlePythonStart = () => {
@@ -65,6 +97,22 @@ function App() {
       >
         {`Activate Motion Capture`}
       </button>
+    </div>
+    <div style={{ gridColumn: '1 / span 3', textAlign: 'center' }}>
+      <div
+        style={{
+          marginTop: 12,
+          padding: '16px 20px',
+          background: 'rgba(0,0,0,0.7)',
+          border: '2px solid #4fc3f7',
+          borderRadius: 10,
+          minHeight: 60,
+          fontSize: 18,
+          fontWeight: 700,
+        }}
+      >
+        {llmText || 'LLM 응답을 기다리는 중...'}
+      </div>
     </div>
   </div>
  );

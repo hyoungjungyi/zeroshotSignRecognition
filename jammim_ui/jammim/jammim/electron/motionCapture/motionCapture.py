@@ -6,6 +6,7 @@ import os
 import sounddevice as sd
 from scipy.io.wavfile import write
 import sys 
+import json
 
 # run_multimodal에서 main_run 함수를 가져옵니다.
 # 주의: 이 파일과 run_multimodal.py는 같은 디렉토리에 있어야 합니다.
@@ -32,10 +33,32 @@ def print_status(message):
 def record_audio(filename, duration, samplerate=44100):
     """음성을 녹음하여 WAV 파일로 저장"""
     print_status(f"\n🎤 {duration}초 동안 음성 녹음 시작...")
+    # 원하는 입력 장치가 있다면 MIC_DEVICE 환경변수에 index(숫자)나 이름을 넣어 사용
+    mic_device = os.environ.get("MIC_DEVICE")
+    if mic_device:
+        try:
+            mic_device = int(mic_device)
+        except ValueError:
+            pass  # 문자열 이름 그대로 사용
+        print_status(f"🎙️ 입력 장치 지정: {mic_device}")
+
     try:
         # 녹음 시작
-        recording = sd.rec(int(duration * samplerate), samplerate=samplerate, channels=1, dtype='int16')
+        recording = sd.rec(
+            int(duration * samplerate),
+            samplerate=samplerate,
+            channels=1,
+            dtype='int16',
+            device=mic_device  # None이면 기본 입력 장치 사용
+        )
         sd.wait()  # 녹음이 끝날 때까지 대기
+
+        # 입력 신호가 없는 경우(모두 0) 바로 알려줌
+        mean_amp = float(np.abs(recording).mean())
+        if mean_amp < 1.0:
+            print_status("⚠️ 녹음된 오디오가 비어있습니다. 마이크 권한/입력 장치 설정을 확인하세요.")
+            return False
+
         write(filename, samplerate, recording)
         print_status(f"✅ 음성 녹음 완료: {filename}")
         return True
@@ -111,11 +134,14 @@ if __name__ == '__main__':
     # 🌟🌟🌟 통합 실행: 캡처 완료 후 run_multimodal의 main_run 호출 🌟🌟🌟
     # -------------------------------------------------------------
     if video_file and audio_file:
-        print_status("\n==================================================")
-        print_status("          ✨ 캡처 완료! 멀티모달 추론 실행...      ")
-        print("==================================================")
         
         # motionCapture.py가 run_multimodal.py의 main_run 함수를 직접 호출합니다.
-        main_run(MODEL_PATH, PROTO_PATH, video_file, audio_file)
+        llm_response = main_run(
+            MODEL_PATH, PROTO_PATH, video_file, audio_file
+        )
+        print(json.dumps({
+            "type": "LLM_RESPONSE",
+            "data": llm_response
+        }))
     else:
         print_status("❌ 캡처 오류로 인해 추론을 시작할 수 없습니다.")

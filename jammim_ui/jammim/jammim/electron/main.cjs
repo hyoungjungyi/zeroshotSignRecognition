@@ -98,6 +98,11 @@ ipcMain.on('start-python', () => {
     return;
   }
 
+  // 프론트 파이프라인이 살아있는지 즉시 확인용 테스트 메시지
+  if (mainWindow) {
+    mainWindow.webContents.send('llm-response', '[test] IPC channel ok');
+  }
+
   runPythonMotionProcess()
     .then(() => {
       console.log('Motion capture process over');
@@ -200,78 +205,34 @@ function runPythonMotionProcess() {
       return reject('동시 실행 방지');
     }
 
-    pyProc = spawn(pythonPath, [scriptPath], {
+    // -u + PYTHONUNBUFFERED로 stdout 버퍼링을 끄고 바로 Electron에 전달되도록 함
+    pyProc = spawn(pythonPath, ['-u', scriptPath], {
       cwd: LSTMPath,
-      shell: false
+      shell: false,
+      env: { ...process.env, PYTHONUNBUFFERED: '1' }
     });
 
     pyProc.stdout.on('data', (data) => {
-      const lines = data.toString().split('\n').filter(Boolean);
-      lines.forEach(line => {
-        try {
-          if (line.startsWith('{')) {
-            const pos = JSON.parse(line);
-            const x = Math.floor(pos.x * screen.width);
-            const y = Math.floor(pos.y * screen.height);
-            if( isVolumeChange ) {
-              if( prev_y === 0 ) {
-                prev_y = y;
-              }
-              if( y > prev_y + 0.02 ) {
-                console.log('[Gesture] Volume Down');
-                if (isMac) {
-                  getCurrentVolume((currentVolume) => {
-                    if (currentVolume !== null) {
-                      setVolume(currentVolume - volumeStep);
-                    }
-                  })
-                } 
-              } else if( y < prev_y - 0.02 ) {
-                console.log('[Gesture] Volume Up');
-                if (isMac) {
-                  getCurrentVolume((currentVolume) => {
-                    if (currentVolume !== null) {
-                      setVolume(currentVolume + volumeStep);
-                    }
-                  })
-                } 
-              }
-            } else if( isBrightnessChange ) {
-              if( prev_y === 0 ) {
-                prev_y = y;
-              }
-              if( y > prev_y + 0.1 ) {
-                console.log('[Gesture] Brightness Down');
-                handleBrightnessChange(true);
-              } else if( y < prev_y - 0.1 ) {
-                console.log('[Gesture] Brightness Up');
-                handleBrightnessChange(false);
-              }
-            } 
-          } else {
-            console.log("너무 배고파");
-            const normalizeLine = line.trim().toLowerCase();
-            if (normalizeLine === 'paper') {
-              prev_y = 0;
-              isBrightnessChange = false;
-              isVolumeChange = false;
-              console.log('[Gesture] paper → exit');
-              stopPythonProcess();
-            } else {
-              // 단일 제스처: 단축키 트리거
-              console.log(`[Gesture] detected: ${normalizeLine}, isMac:`,isMac);
-              if(isMac) {
-                console.log("triggering shortcut for mac",isMac);
-                triggerShortcutMac(normalizeLine);
-              } else {
-                console.log("triggering shortcut for window");
-                triggerShortcutWindow(normalizeLine);
-              }
-            }
-          }
-        } catch (e) { /* JSON 파싱 안 되면 무시 */ }
-      });
+    const lines = data.toString().split('\n').filter(Boolean);
+
+    lines.forEach(line => {
+      try {
+        const msg = JSON.parse(line);
+
+        if (msg.type === 'LLM_RESPONSE') {
+          console.log('[Electron] LLM_RESPONSE:', msg.data);
+
+          BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('llm-response', msg.data);
+          });
+        }
+      } catch (e) {
+        // JSON이 아니면 그냥 로그 (ex: 실수로 stdout에 찍힌 문자열)
+        console.log('[Python stdout]', line);
+      }
     });
+  });
+
 
     pyProc.stderr.on('data', (data) => {
       console.error(`[Python STDERR] ${data.toString()}`);
@@ -462,5 +423,3 @@ ipcMain.on('train-LSTM-script', () => {
     console.log(`TrainLSTM script exited with code ${code}`);
   });
 });
-
-
